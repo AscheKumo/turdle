@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turdle 🐢</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #2d2d2d;
+      color: #fff;
+      padding: 1em;
+      font-size: 2em;
+    }
+    #game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2em;
+    }
+    .guess-row {
+      display: flex;
+      margin: 0.5em 0;
+    }
+    .letter-box {
+      width: 2.5em;
+      height: 2.5em;
+      border: 2px solid #ccc;
+      margin: 0 0.1em;
+      font-size: 1.5em;
+      line-height: 2.5em;
+      text-transform: uppercase;
+      background: white;
+    }
+    .correct {
+      background-color: #6aaa64;
+      color: white;
+    }
+    .present {
+      background-color: #c9b458;
+      color: white;
+    }
+    .absent {
+      background-color: #787c7e;
+      color: white;
+    }
+    .space-box {
+      border: none;
+      background: none;
+    }
+    input[type="text"] {
+      font-size: 1.2em;
+      padding: 0.5em;
+      width: 300px;
+      margin-top: 1em;
+    }
+    button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+      margin-left: 1em;
+    }
+  </style>
+</head>
+<body>
+  <header>Turdle 🐢</header>
+  <div id="game"></div>
+  <input type="text" id="guessInput" placeholder="Enter your guess..." />
+  <button onclick="submitGuess()">Guess</button>
+
+  <script>
+    const answers = [
+  "Stranger Things", "Breaking Bad", "Better Call Saul", "The Last of Us", "Game of Thrones", "The Mandalorian", "The Boys", "Squid Game", "Loki", "WandaVision",
+  "Moon Knight", "Peacemaker", "The Bear", "Succession", "Euphoria", "Rick and Morty", "The Witcher", "Invincible", "Wednesday", "Bridgerton",
+  "House of the Dragon", "Foundation", "The Umbrella Academy", "Severance", "Andor", "Ted Lasso", "Only Murders in the Building", "The Morning Show", "Yellowjackets", "Barry",
+  "Barbie", "Oppenheimer", "Everything Everywhere All at Once", "Dune", "Spider Man No Way Home", "The Batman", "Top Gun Maverick", "Avatar The Way of Water", "The Menu", "Nope",
+  "John Wick", "Guardians of the Galaxy", "Doctor Strange", "The Flash", "The Marvels", "Bullet Train", "Don't Look Up", "Black Panther", "The Whale", "The Fabelmans",
+  "Glass Onion", "Mission Impossible", "The Super Mario Bros Movie", "The Northman", "M3GAN", "Walter White", "Jesse Pinkman", "Saul Goodman", "Joel Miller", "Ellie Williams",
+  "Darth Vader", "Grogu", "Din Djarin", "Homelander", "Starlight", "Loki Laufeyson", "Wanda Maximoff", "Steven Grant", "Marc Spector", "Bruce Wayne",
+  "Arthur Fleck", "Peter Parker", "Miles Morales", "Gwen Stacy", "Tony Stark", "Steve Rogers", "Natasha Romanoff", "Thanos", "Shuri", "T Challa",
+  "Geralt of Rivia", "Yennefer", "Ciri", "Vecna", "Eleven", "Mike Wheeler", "Robin Buckley", "Tommy Shelby", "Alfie Solomons", "Beth Harmon",
+  "Joe Goldberg", "Love Quinn", "Rhaenyra Targaryen", "Daemon Targaryen", "Aemond Targaryen", "Cassian Andor", "Mark Scout", "Kendall Roy", "Logan Roy", "Roman Roy",
+  "Greg Hirsch", "Tom Wambsgans", "Mabel Mora", "Charles Haden Savage", "Oliver Putnam", "Jack Reacher", "Ethan Hunt", "Beef", "Maddie Nears", "Janine Teagues",
+  "Harley Quinn", "Poison Ivy", "King Shark", "Peach Salinger", "Carmy Berzatto", "Sydney Adamu", "Richie Jerimovich", "Lucius Fox", "Selina Kyle", "Alfred Pennyworth",
+  "Barry Allen", "Jay Garrick", "Wally West", "Zoom", "Harrison Wells", "Cisco Ramon", "Felicity Smoak", "Oliver Queen", "Roy Harper", "Slade Wilson",
+  "Dinah Lance", "Sara Lance", "John Diggle", "Rory Gilmore", "Lorelai Gilmore", "Emily Gilmore", "Luke Danes", "Jess Mariano", "Sookie St James", "Michel Gerard",
+  "Dean Forester", "Logan Huntzberger", "Misty Knight", "Jessica Jones", "Luke Cage", "Danny Rand", "Colleen Wing", "Matt Murdock", "Foggy Nelson", "Karen Page",
+  "Wilson Fisk", "Frank Castle", "Daisy Johnson", "Phil Coulson", "Melinda May", "Jemma Simmons", "Leo Fitz", "Skye", "Lance Hunter", "Bobbi Morse",
+  "Nick Fury", "Maria Hill", "Agatha Harkness", "Monica Rambeau", "Kamala Khan", "Kate Bishop", "Clint Barton", "Echo", "Maya Lopez", "Kingpin",
+  "Sylvie Laufeydottir", "Mobius M Mobius", "Miss Minutes", "Kang the Conqueror", "Ant Man", "Hope Van Dyne", "Cassie Lang", "Hank Pym", "Janet Van Dyne", "Rocket Raccoon",
+  "Groot", "Drax the Destroyer", "Mantis", "Nebula", "Gamora", "Yondu Udonta", "Adam Warlock", "Star Lord", "Pepper Potts", "Happy Hogan",
+  "Wong", "America Chavez", "Christine Palmer", "Dormammu", "Mordo", "Clea", "Shang Chi", "Katy Chen", "Xu Wenwu", "Xialing",
+  "Simu Liu", "Awkwafina", "Michelle Yeoh", "Ke Huy Quan", "Stephanie Hsu", "Waymond Wang", "Joy Wang", "Evelyn Wang", "Jobu Tupaki", "Alpha Waymond",
+  "Alpha Gong Gong", "Raccacoonie", "Jamie Lee Curtis", "Deirdre Beaubeirdre", "The Daniels", "Spider Pig", "Peni Parker", "Spider Noir", "Spider Gwen", "2099 Spider Man",
+  "Jessica Drew", "Ben Reilly", "Scarlet Spider", "Peter B Parker", "Spot", "Kingpin", "Doc Ock", "Sandman", "Electro", "Green Goblin",
+  "MJ Watson", "Ned Leeds", "Aunt May", "Happy", "J Jonah Jameson", "Tobey Maguire", "Andrew Garfield", "Tom Holland", "Zendaya", "Jamie Foxx",
+  "Alfred Molina", "Willem Dafoe", "Benedict Cumberbatch", "Doctor Strange", "Christine Palmer", "Loki Variant", "Kang", "Victor Timely", "Ramona Flowers", "Scott Pilgrim",
+  "Wallace Wells", "Knives Chau", "Gideon Graves", "Roxy Richter", "Lucas Lee", "Todd Ingram", "Envy Adams", "Kim Pine", "Young Neil", "Stephen Stills",
+  "Nega Scott", "Harvey Specter", "Mike Ross", "Rachel Zane", "Jessica Pearson", "Louis Litt", "Donna Paulsen", "Robert Zane", "Katrina Bennett", "Sheila Sazs",
+  "Jon Snow", "Arya Stark", "Sansa Stark", "Bran Stark", "Tyrion Lannister", "Cersei Lannister", "Jaime Lannister", "Daenerys Targaryen", "Khal Drogo", "Jorah Mormont",
+  "Missandei", "Grey Worm", "Varys", "Brienne of Tarth", "Podrick Payne", "Tormund Giantsbane", "Samwell Tarly", "Gilly", "The Hound", "The Mountain",
+  "Oberyn Martell", "Ellaria Sand", "Ramsay Bolton", "Roose Bolton", "Littlefinger", "Theon Greyjoy", "Yara Greyjoy", "Melisandre", "Stannis Baratheon", "Davos Seaworth",
+  "Gendry", "Beric Dondarrion", "Thor", "Loki", "Jane Foster", "Darcy Lewis", "Erik Selvig", "Hela", "Korg", "Valkyrie",
+  "Heimdall", "Odin", "Frigga", "Sif", "Gorr the God Butcher", "Love", "Kratos", "Atreus", "Freya", "Baldur", "Mimir", "Brok", "Sindri", "Tyr", "Angrboda", "Thor Odinson"
+];
+
+    const answer = answers[Math.floor(Math.random() * answers.length)].toUpperCase();
+    const game = document.getElementById("game");
+
+    function displayGuess(guess) {
+      const row = document.createElement("div");
+      row.className = "guess-row";
+      let splitGuess = guess.toUpperCase().padEnd(answer.length, ' ').split("");
+      let splitAnswer = answer.split("");
+
+      splitGuess.forEach((char, i) => {
+        const box = document.createElement("div");
+        box.className = "letter-box";
+
+        if (splitAnswer[i] === " ") {
+          box.className += " space-box";
+          box.textContent = " ";
+        } else if (char === " ") {
+          box.className += " space-box";
+          box.textContent = " ";
+        } else {
+          box.textContent = char;
+          if (char === splitAnswer[i]) {
+            box.classList.add("correct");
+          } else if (splitAnswer.includes(char)) {
+            box.classList.add("present");
+          } else {
+            box.classList.add("absent");
+          }
+        }
+        row.appendChild(box);
+      });
+      game.appendChild(row);
+    }
+
+    function submitGuess() {
+      const input = document.getElementById("guessInput");
+      const guess = input.value.trim();
+      if (!guess) return;
+      displayGuess(guess);
+      if (guess.toUpperCase() === answer) {
+        setTimeout(() => alert("You got it! 🐢"), 100);
+      }
+      input.value = "";
+    }
+  </script>
+</body>
+</html>
