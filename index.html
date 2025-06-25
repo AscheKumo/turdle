@@ -132,6 +132,7 @@
     const maxGuesses = 6;
     const game = document.getElementById("game");
     let currentGuess = 0;
+    let gameOver = false;
 
     function initGrid() {
       for (let i = 0; i < maxGuesses; i++) {
@@ -148,6 +149,8 @@
     }
 
     function submitGuess() {
+      if (gameOver) return;
+
       const input = document.getElementById("guessInput");
       const guess = input.value.toUpperCase().padEnd(answer.length, ' ');
       if (!guess || currentGuess >= maxGuesses) return;
@@ -167,9 +170,13 @@
       }
 
       if (guess === answer) {
-        setTimeout(() => alert("You got it! 🐢"), 100);
+        gameOver = true;
+        setTimeout(() => alert("🎉 Congrats, you got it! 🐢"), 100);
+      } else if (++currentGuess === maxGuesses) {
+        gameOver = true;
+        setTimeout(() => alert("Game over! The answer was: " + answer), 100);
       }
-      currentGuess++;
+
       input.value = "";
     }
 
