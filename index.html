@@ -5,16 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Turdle 🐢</title>
   <style>
+    :root {
+      --bg: #121213;
+      --text: #d7dadc;
+      --tile-empty: #3a3a3c;
+      --correct: #538d4e;
+      --present: #b59f3b;
+      --absent: #3a3a3c;
+    }
     body {
-      font-family: sans-serif;
-      background: #f2f2f2;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       text-align: center;
       margin: 0;
       padding: 0;
     }
     header {
-      background: #2d2d2d;
-      color: #fff;
       padding: 1em;
       font-size: 2em;
     }
@@ -22,33 +29,38 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 2em;
+      gap: 0.5em;
+      margin: 2em 0;
     }
     .guess-row {
       display: flex;
-      margin: 0.5em 0;
+      gap: 0.25em;
     }
     .letter-box {
-      width: 2.5em;
-      height: 2.5em;
-      border: 2px solid #ccc;
-      margin: 0 0.1em;
+      width: 3em;
+      height: 3em;
+      border: 2px solid var(--tile-empty);
       font-size: 1.5em;
-      line-height: 2.5em;
+      font-weight: bold;
+      line-height: 3em;
       text-transform: uppercase;
-      background: white;
+      background-color: var(--bg);
+      color: var(--text);
     }
     .correct {
-      background-color: #6aaa64;
-      color: white;
+      background-color: var(--correct);
+      border-color: var(--correct);
+      color: #fff;
     }
     .present {
-      background-color: #c9b458;
-      color: white;
+      background-color: var(--present);
+      border-color: var(--present);
+      color: #fff;
     }
     .absent {
-      background-color: #787c7e;
-      color: white;
+      background-color: var(--absent);
+      border-color: var(--absent);
+      color: #fff;
     }
     .space-box {
       border: none;
@@ -59,11 +71,18 @@
       padding: 0.5em;
       width: 300px;
       margin-top: 1em;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
     }
     button {
       padding: 0.5em 1em;
       font-size: 1em;
       margin-left: 1em;
+      background-color: #538d4e;
+      border: none;
+      color: #fff;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -110,49 +129,51 @@
 ];
 
     const answer = answers[Math.floor(Math.random() * answers.length)].toUpperCase();
+    const maxGuesses = 6;
     const game = document.getElementById("game");
+    let currentGuess = 0;
 
-    function displayGuess(guess) {
-      const row = document.createElement("div");
-      row.className = "guess-row";
-      let splitGuess = guess.toUpperCase().padEnd(answer.length, ' ').split("");
-      let splitAnswer = answer.split("");
-
-      splitGuess.forEach((char, i) => {
-        const box = document.createElement("div");
-        box.className = "letter-box";
-
-        if (splitAnswer[i] === " ") {
-          box.className += " space-box";
-          box.textContent = " ";
-        } else if (char === " ") {
-          box.className += " space-box";
-          box.textContent = " ";
-        } else {
-          box.textContent = char;
-          if (char === splitAnswer[i]) {
-            box.classList.add("correct");
-          } else if (splitAnswer.includes(char)) {
-            box.classList.add("present");
-          } else {
-            box.classList.add("absent");
-          }
+    function initGrid() {
+      for (let i = 0; i < maxGuesses; i++) {
+        const row = document.createElement("div");
+        row.className = "guess-row";
+        row.id = `row-${i}`;
+        for (let j = 0; j < answer.length; j++) {
+          const box = document.createElement("div");
+          box.className = answer[j] === ' ' ? "letter-box space-box" : "letter-box";
+          row.appendChild(box);
         }
-        row.appendChild(box);
-      });
-      game.appendChild(row);
+        game.appendChild(row);
+      }
     }
 
     function submitGuess() {
       const input = document.getElementById("guessInput");
-      const guess = input.value.trim();
-      if (!guess) return;
-      displayGuess(guess);
-      if (guess.toUpperCase() === answer) {
+      const guess = input.value.toUpperCase().padEnd(answer.length, ' ');
+      if (!guess || currentGuess >= maxGuesses) return;
+
+      const row = document.getElementById(`row-${currentGuess}`);
+      for (let i = 0; i < answer.length; i++) {
+        const box = row.children[i];
+        box.textContent = guess[i];
+        if (answer[i] === ' ') continue;
+        if (guess[i] === answer[i]) {
+          box.classList.add("correct");
+        } else if (answer.includes(guess[i])) {
+          box.classList.add("present");
+        } else {
+          box.classList.add("absent");
+        }
+      }
+
+      if (guess === answer) {
         setTimeout(() => alert("You got it! 🐢"), 100);
       }
+      currentGuess++;
       input.value = "";
     }
+
+    initGrid();
   </script>
 </body>
 </html>
