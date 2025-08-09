@@ -80,13 +80,108 @@
       color: #fff;
       cursor: pointer;
     }
+    #keyboard {
+      margin: 2em auto;
+      max-width: 500px;
+    }
+    .keyboard-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.25em;
+      margin-bottom: 0.5em;
+    }
+    .key {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #818384;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.9em;
+      cursor: pointer;
+      border-radius: 4px;
+      user-select: none;
+      min-width: 2.5em;
+      height: 3.5em;
+    }
+    .key.wide {
+      min-width: 4em;
+    }
+    .key:hover {
+      opacity: 0.8;
+    }
+    .key.correct {
+      background-color: var(--correct);
+    }
+    .key.present {
+      background-color: var(--present);
+    }
+    .key.absent {
+      background-color: #3a3a3c;
+    }
+    #share-container {
+      margin: 1em;
+    }
+    #share-button {
+      background-color: #538d4e;
+      border: none;
+      color: white;
+      padding: 0.5em 1em;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 4px;
+      display: none;
+    }
+    .current-letter {
+      border-color: #565758;
+      background-color: #121213;
+      color: #d7dadc;
+    }
   </style>
 </head>
 <body>
   <header>Turdle 🐢</header>
   <div id="game"></div>
-  <input type="text" id="guessInput" placeholder="Enter your guess..." />
-  <button onclick="submitGuess()">Guess</button>
+  <div id="keyboard">
+    <div class="keyboard-row">
+      <button class="key" data-key="Q">Q</button>
+      <button class="key" data-key="W">W</button>
+      <button class="key" data-key="E">E</button>
+      <button class="key" data-key="R">R</button>
+      <button class="key" data-key="T">T</button>
+      <button class="key" data-key="Y">Y</button>
+      <button class="key" data-key="U">U</button>
+      <button class="key" data-key="I">I</button>
+      <button class="key" data-key="O">O</button>
+      <button class="key" data-key="P">P</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key" data-key="A">A</button>
+      <button class="key" data-key="S">S</button>
+      <button class="key" data-key="D">D</button>
+      <button class="key" data-key="F">F</button>
+      <button class="key" data-key="G">G</button>
+      <button class="key" data-key="H">H</button>
+      <button class="key" data-key="J">J</button>
+      <button class="key" data-key="K">K</button>
+      <button class="key" data-key="L">L</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key wide" data-key="ENTER">ENTER</button>
+      <button class="key" data-key="Z">Z</button>
+      <button class="key" data-key="X">X</button>
+      <button class="key" data-key="C">C</button>
+      <button class="key" data-key="V">V</button>
+      <button class="key" data-key="B">B</button>
+      <button class="key" data-key="N">N</button>
+      <button class="key" data-key="M">M</button>
+      <button class="key wide" data-key="BACKSPACE">⌫</button>
+    </div>
+  </div>
+  <div id="share-container">
+    <button id="share-button" onclick="shareResults()">Share Results</button>
+  </div>
 
   <script>
     const answers = [
@@ -152,7 +247,11 @@
     const wordLength = 5;
     const game = document.getElementById("game");
     let currentGuess = 0;
+    let currentLetter = 0;
     let gameOver = false;
+    let currentWord = "";
+    let keyboardState = {}; // Track letter states for keyboard coloring
+    let guessResults = []; // Store results for sharing
 
     function initGrid() {
       for (let i = 0; i < maxGuesses; i++) {
@@ -168,25 +267,48 @@
       }
     }
 
+    function addLetter(letter) {
+      if (gameOver || currentLetter >= wordLength) return;
+      
+      const row = document.getElementById(`row-${currentGuess}`);
+      const box = row.children[currentLetter];
+      box.textContent = letter;
+      box.classList.add('current-letter');
+      
+      currentWord += letter;
+      currentLetter++;
+    }
+
+    function removeLetter() {
+      if (gameOver || currentLetter <= 0) return;
+      
+      currentLetter--;
+      currentWord = currentWord.slice(0, -1);
+      
+      const row = document.getElementById(`row-${currentGuess}`);
+      const box = row.children[currentLetter];
+      box.textContent = "";
+      box.classList.remove('current-letter');
+    }
+
+    function updateKeyboardKey(letter, state) {
+      if (!keyboardState[letter] || 
+          (keyboardState[letter] === 'absent' && state !== 'absent') ||
+          (keyboardState[letter] === 'present' && state === 'correct')) {
+        keyboardState[letter] = state;
+        
+        const key = document.querySelector(`[data-key="${letter}"]`);
+        if (key) {
+          key.classList.remove('correct', 'present', 'absent');
+          key.classList.add(state);
+        }
+      }
+    }
+
     function submitGuess() {
-      if (gameOver) return;
+      if (gameOver || currentWord.length !== wordLength) return;
 
-      const input = document.getElementById("guessInput");
-      const guess = input.value.toUpperCase().trim();
-      
-      // Validate input
-      if (guess.length !== wordLength) {
-        alert(`Please enter a ${wordLength}-letter word`);
-        return;
-      }
-      
-      if (!/^[A-Z]+$/.test(guess)) {
-        alert("Please enter only letters");
-        return;
-      }
-
-      if (currentGuess >= maxGuesses) return;
-
+      const guess = currentWord;
       const row = document.getElementById(`row-${currentGuess}`);
       
       // Create array to track which letters have been used for correct/present marking
@@ -213,25 +335,103 @@
         }
       }
       
-      // Apply the styling
+      // Apply the styling and update keyboard
+      const rowResult = [];
       for (let i = 0; i < wordLength; i++) {
         const box = row.children[i];
-        box.textContent = guessArray[i];
+        box.classList.remove('current-letter');
         box.classList.add(letterStates[i]);
+        updateKeyboardKey(guessArray[i], letterStates[i]);
+        rowResult.push(letterStates[i]);
       }
+      
+      guessResults.push(rowResult);
 
       if (guess === answer) {
         gameOver = true;
-        setTimeout(() => alert("🎉 Congratulations! You got it! 🐢"), 100);
+        document.getElementById('share-button').style.display = 'inline-block';
+        setTimeout(() => alert("🎉 Congratulations! You got it! 🐢"), 500);
       } else if (++currentGuess === maxGuesses) {
         gameOver = true;
-        setTimeout(() => alert("Game over! The answer was: " + answer), 100);
+        document.getElementById('share-button').style.display = 'inline-block';
+        setTimeout(() => alert("Game over! The answer was: " + answer), 500);
       }
 
-      input.value = "";
+      currentWord = "";
+      currentLetter = 0;
+    }
+
+    function shareResults() {
+      const gameNumber = Math.floor(Math.random() * 1000) + 1;
+      const attempts = gameOver && currentWord === "" ? (currentGuess === maxGuesses ? "X" : currentGuess) : currentGuess;
+      
+      let resultText = `Turdle 🐢 #${gameNumber} ${attempts}/${maxGuesses}\n\n`;
+      
+      guessResults.forEach(row => {
+        row.forEach(state => {
+          if (state === 'correct') resultText += '🟩';
+          else if (state === 'present') resultText += '🟨';
+          else resultText += '⬛';
+        });
+        resultText += '\n';
+      });
+      
+      resultText += '\nPlay at: ' + window.location.href;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'Turdle 🐢',
+          text: resultText
+        });
+      } else {
+        navigator.clipboard.writeText(resultText).then(() => {
+          alert('Results copied to clipboard!');
+        }).catch(() => {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = resultText;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          alert('Results copied to clipboard!');
+        });
+      }
     }
 
     initGrid();
+
+    // Keyboard event listeners
+    document.addEventListener('keydown', (e) => {
+      if (gameOver) return;
+      
+      const key = e.key.toUpperCase();
+      
+      if (key === 'ENTER') {
+        submitGuess();
+      } else if (key === 'BACKSPACE') {
+        removeLetter();
+      } else if (/^[A-Z]$/.test(key)) {
+        addLetter(key);
+      }
+    });
+
+    // On-screen keyboard clicks
+    document.querySelectorAll('.key').forEach(key => {
+      key.addEventListener('click', () => {
+        if (gameOver) return;
+        
+        const keyValue = key.getAttribute('data-key');
+        
+        if (keyValue === 'ENTER') {
+          submitGuess();
+        } else if (keyValue === 'BACKSPACE') {
+          removeLetter();
+        } else if (/^[A-Z]$/.test(keyValue)) {
+          addLetter(keyValue);
+        }
+      });
+    });
   </script>
 </body>
 </html>
